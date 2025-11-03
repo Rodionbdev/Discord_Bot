@@ -27,7 +27,7 @@ It is designed to help manage communities by providing essential moderation tool
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/BPYKAXTPABA/Discord_Bot.git
+    git clone https://github.com/Rodionbdev/Discord_Bot.git
     ```
 
 2. Open the project in Visual Studio.
