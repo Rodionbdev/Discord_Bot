@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.EventArgs;
@@ -40,12 +40,12 @@ namespace MyDiscordBot
             };
             
             var slashCommandsConfig = Client.UseSlashCommands();
-            slashCommandsConfig.RegisterCommands<BasicSlashCommands>(); // я тестил комманду, она просто показывает ID и username
+            slashCommandsConfig.RegisterCommands<BasicSlashCommands>(); // test command – displays user ID and username
             
-            slashCommandsConfig.RegisterCommands<SlashCommands>(); // все модерирующие комманды в одном классе
+            slashCommandsConfig.RegisterCommands<SlashCommands>(); // all moderation commands grouped in one class
 
             Commands = Client.UseCommandsNext(commandConfig);
-            Commands.RegisterCommands<TestCommands>(); // чисто для себя добавил, кому надо можете удалить
+            Commands.RegisterCommands<TestCommands>(); // personal test commands, can be removed if not needed
 
             await Client.ConnectAsync();
             await Task.Delay(-1);
