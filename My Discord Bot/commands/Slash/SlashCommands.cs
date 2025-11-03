@@ -9,26 +9,26 @@ namespace MyDiscordBot.Commands
 {
     public class SlashCommands : ApplicationCommandModule
     {
-        private static Dictionary<ulong, int> _warns = new Dictionary<ulong, int>(); // Временная база с варнами пользователей(сбрасывается при перезапуске)
+        private static Dictionary<ulong, int> _warns = new Dictionary<ulong, int>(); // Temporary in-memory warning database (resets after restart)
 
-        private bool IsUserAdmin(InteractionContext ctx) // Простая проверка являеться ли пользователь Администратором
+        private bool IsUserAdmin(InteractionContext ctx) // Simple check if the user is an Administrator
         {
             return ctx.Member.Permissions.HasPermission(Permissions.Administrator);
         }
 
-        private bool IsUserModerator(InteractionContext ctx) // Простая проверка являеться ли пользователь модератором
+        private bool IsUserModerator(InteractionContext ctx) // Simple check if the user is a Moderator
         {
             return ctx.Member.Permissions.HasPermission(Permissions.ModerateMembers);
         }
         
-        // 1. Мут в чате
-        [SlashCommand("mutechat", "Мут пользователя в чате")]
-        public async Task MuteChat(InteractionContext ctx, [Option("user", "Пользователь для мута")] DiscordUser user)
+        // 1. Mute in chat
+        [SlashCommand("mutechat", "Mute a user in text chat")]
+        public async Task MuteChat(InteractionContext ctx, [Option("user", "User to mute")] DiscordUser user)
         {
             if (!IsUserModerator(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -48,18 +48,18 @@ namespace MyDiscordBot.Commands
 
             await member.GrantRoleAsync(muteRole);
             await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} замучен в чате."));
+                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been muted in chat."));
         }
 
-        // 2. Полный мут в войсе (кик + запрет входа)
-        [SlashCommand("mutevoice", "Отключить пользователя из войс-чата и запретить вход")]
+        // 2. Full voice mute (kick + block from joining)
+        [SlashCommand("mutevoice", "Disconnect a user from voice and block rejoining")]
         public async Task MuteVoice(InteractionContext ctx,
-            [Option("user", "Пользователь для мута в войсе")] DiscordUser user)
+            [Option("user", "User to mute in voice")] DiscordUser user)
         {
             if (!IsUserModerator(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -91,17 +91,17 @@ namespace MyDiscordBot.Commands
 
             await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                 new DiscordInteractionResponseBuilder().WithContent(
-                    $"{member.DisplayName} замучен в войс-чате и не может подключаться."));
+                    $"{member.DisplayName} has been muted in voice channels and cannot join them."));
         }
 
-        // 3. Варн пользователя (счётчик + авто-мут/бан)
-        [SlashCommand("warn", "Выдать варн пользователю")]
-        public async Task Warn(InteractionContext ctx, [Option("user", "Пользователь для варна")] DiscordUser user)
+        // 3. Warn a user (counter + auto-mute/ban)
+        [SlashCommand("warn", "Issue a warning to a user")]
+        public async Task Warn(InteractionContext ctx, [Option("user", "User to warn")] DiscordUser user)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -118,31 +118,31 @@ namespace MyDiscordBot.Commands
                 await MuteChat(ctx, user);
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                     new DiscordInteractionResponseBuilder().WithContent(
-                        $"{member.DisplayName} получил 3 варна и был замучен в чате."));
+                        $"{member.DisplayName} has received 3 warnings and was muted in chat."));
             }
             else if (_warns[user.Id] >= 5)
             {
                 await member.BanAsync();
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                     new DiscordInteractionResponseBuilder().WithContent(
-                        $"{member.DisplayName} получил 5 варнов и был забанен."));
+                        $"{member.DisplayName} has received 5 warnings and was banned."));
             }
             else
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                     new DiscordInteractionResponseBuilder().WithContent(
-                        $"{member.DisplayName} получил варн. Всего варнов: {_warns[user.Id]}/5"));
+                        $"{member.DisplayName} has been warned. Total warnings: {_warns[user.Id]}/5"));
             }
         }
 
-        // 4. Бан пользователя
-        [SlashCommand("ban", "Забанить пользователя")]
-        public async Task Ban(InteractionContext ctx, [Option("user", "Пользователь для бана")] DiscordUser user)
+        // 4. Ban a user
+        [SlashCommand("ban", "Ban a user")]
+        public async Task Ban(InteractionContext ctx, [Option("user", "User to ban")] DiscordUser user)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -151,18 +151,18 @@ namespace MyDiscordBot.Commands
             await member.BanAsync();
 
             await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} был забанен."));
+                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been banned."));
         }
 
-        // 5. Написание правил
-        [SlashCommand("rules", "Вывести правила")]
+        // 5. Show rules
+        [SlashCommand("rules", "Display the server rules")]
         public async Task Rules(InteractionContext ctx)
         {
             var embed = new DiscordEmbedBuilder()
             {
-                Title = "Правила сервера",
+                Title = "Server Rules",
                 Description =
-                    "1. Не флудить\n2. Не оскорблять участников\n3. Не использовать запрещённые слова\n4. Соблюдать правила Discord",
+                    "1. No spamming\n2. Be respectful to others\n3. Do not use prohibited language\n4. Follow Discord TOS",
                 Color = DiscordColor.Azure
             };
 
@@ -170,14 +170,14 @@ namespace MyDiscordBot.Commands
                 new DiscordInteractionResponseBuilder().AddEmbed(embed));
         }
 
-        // 6. Информация о боте
-        [SlashCommand("info", "Вывести информацию о боте")]
+        // 6. Bot information
+        [SlashCommand("info", "Display bot information")]
         public async Task Info(InteractionContext ctx)
         {
             var embed = new DiscordEmbedBuilder()
             {
-                Title = "Информация о боте",
-                Description = "Обычный модерирующий бот для Discord\nСоздатель бота - alfredo\nDiscord: 1255968122754699305\n Telegram: TPABABPYKAX",
+                Title = "Bot Information",
+                Description = "A standard Discord moderation bot.\nDeveloper: Rodion\nDiscord: 1255968122754699305\nTelegram: @Rodionbdev",
                 Color = DiscordColor.Azure
             };
 
@@ -185,14 +185,14 @@ namespace MyDiscordBot.Commands
                 new DiscordInteractionResponseBuilder().AddEmbed(embed));
         }
 
-        // 7. Размут в чате
-        [SlashCommand("unmutechat", "Размут пользователя в чате")]
-        public async Task UnmuteFromChat(InteractionContext ctx, [Option("user", "Пользователь для размута")] DiscordUser user)
+        // 7. Unmute in chat
+        [SlashCommand("unmutechat", "Unmute a user in text chat")]
+        public async Task UnmuteFromChat(InteractionContext ctx, [Option("user", "User to unmute")] DiscordUser user)
         {
             if (!IsUserModerator(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -203,18 +203,18 @@ namespace MyDiscordBot.Commands
             {
                 await member.RevokeRoleAsync(muteRole);
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} был размучен в чате."));
+                    new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been unmuted in chat."));
             }
         }
 
-        // 8. Размут в войсе
-        [SlashCommand("unmutevoice", "Размут пользователя в войсе")]
-        public async Task UnmuteFromVoice(InteractionContext ctx, [Option("user", "Пользователь для размута")] DiscordUser user)
+        // 8. Unmute in voice
+        [SlashCommand("unmutevoice", "Unmute a user in voice")]
+        public async Task UnmuteFromVoice(InteractionContext ctx, [Option("user", "User to unmute")] DiscordUser user)
         {
             if (!IsUserModerator(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -225,18 +225,18 @@ namespace MyDiscordBot.Commands
             {
                 await member.RevokeRoleAsync(muteRole);
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} был размучен в войсе."));
+                    new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been unmuted in voice."));
             }
         }
 
-        // 9. Кик пользователя
-        [SlashCommand("kick", "Кикнуть пользователя с сервера")]
-        public async Task Kick(InteractionContext ctx, [Option("user", "Пользователь для кика")] DiscordUser user)
+        // 9. Kick a user
+        [SlashCommand("kick", "Kick a user from the server")]
+        public async Task Kick(InteractionContext ctx, [Option("user", "User to kick")] DiscordUser user)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -244,17 +244,17 @@ namespace MyDiscordBot.Commands
             var member = await ctx.Guild.GetMemberAsync(user.Id);
             await member.RemoveAsync();
             await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} был кикнут с сервера."));
+                new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been kicked from the server."));
         }
 
-        // 10. Разбан пользователя (только по ID)
-        [SlashCommand("unban", "Разбанить пользователя по ID")]
-        public async Task Unban(InteractionContext ctx, [Option("userid", "ID пользователя для разбана")] string userIdStr)
+        // 10. Unban user (by ID only)
+        [SlashCommand("unban", "Unban a user by ID")]
+        public async Task Unban(InteractionContext ctx, [Option("userid", "User ID to unban")] string userIdStr)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -262,7 +262,7 @@ namespace MyDiscordBot.Commands
             if (!ulong.TryParse(userIdStr, out ulong userId))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("Ошибка: введён некорректный ID пользователя."));
+                    new DiscordInteractionResponseBuilder().WithContent("Error: invalid user ID format."));
                 return;
             }
 
@@ -273,23 +273,23 @@ namespace MyDiscordBot.Commands
             {
                 await ctx.Guild.UnbanMemberAsync(userId);
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"Пользователь {bannedUser.User.Username} был разбанен."));
+                    new DiscordInteractionResponseBuilder().WithContent($"User {bannedUser.User.Username} has been unbanned."));
             }
             else
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"Пользователь с ID {userId} не найден в списке забаненных."));
+                    new DiscordInteractionResponseBuilder().WithContent($"User with ID {userId} not found in the ban list."));
             }
         }
 
-        // 11. Снять варн
-        [SlashCommand("unwarn", "Снять варн с пользователя")]
-        public async Task Unwarn(InteractionContext ctx, [Option("user", "Пользователь для снятия варна")] DiscordUser user)
+        // 11. Remove a warning
+        [SlashCommand("unwarn", "Remove a warning from a user")]
+        public async Task Unwarn(InteractionContext ctx, [Option("user", "User to remove warning from")] DiscordUser user)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -299,7 +299,7 @@ namespace MyDiscordBot.Commands
                 _warns[user.Id]--;
                 var member = await ctx.Guild.GetMemberAsync(user.Id);
 
-                // Размут в чате, если количество варнов становится 2
+                // Unmute in chat if warnings drop to 2
                 if (_warns[user.Id] == 2)
                 {
                     var muteRole = ctx.Guild.Roles.Values.FirstOrDefault(r => r.Name == "MutedFromChat");
@@ -307,40 +307,38 @@ namespace MyDiscordBot.Commands
                     {
                         await member.RevokeRoleAsync(muteRole);
                         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                            new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} был размучен в чате и теперь имеет {_warns[user.Id]} варнов."));
+                            new DiscordInteractionResponseBuilder().WithContent($"{member.DisplayName} has been unmuted in chat and now has {_warns[user.Id]} warnings."));
                     }
                 }
 
-                // Если количество варнов стало 0
+                // If warnings drop to 0
                 if (_warns[user.Id] <= 0)
                 {
                     _warns.Remove(user.Id);
                     await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                        new DiscordInteractionResponseBuilder().WithContent($"{user.Username} больше не имеет варнов."));
+                        new DiscordInteractionResponseBuilder().WithContent($"{user.Username} no longer has any warnings."));
                 }
                 else
                 {
                     await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                        new DiscordInteractionResponseBuilder().WithContent($"{user.Username} теперь имеет {_warns[user.Id]} варнов."));
+                        new DiscordInteractionResponseBuilder().WithContent($"{user.Username} now has {_warns[user.Id]} warnings."));
                 }
             }
             else
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} не имеет варнов."));
+                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} has no warnings."));
             }
         }
 
-
-
-        // 12. Получить варны пользователя
-        [SlashCommand("checkwarns", "Проверить количество варнов у пользователя")]
-        public async Task CheckWarns(InteractionContext ctx, [Option("user", "Пользователь для проверки варнов")] DiscordUser user)
+        // 12. Check warnings
+        [SlashCommand("checkwarns", "Check a user's warnings count")]
+        public async Task CheckWarns(InteractionContext ctx, [Option("user", "User to check warnings for")] DiscordUser user)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
@@ -348,39 +346,39 @@ namespace MyDiscordBot.Commands
             if (_warns.ContainsKey(user.Id))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} имеет {_warns[user.Id]} варнов."));
+                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} has {_warns[user.Id]} warnings."));
             }
             else
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} не имеет варнов."));
+                    new DiscordInteractionResponseBuilder().WithContent($"{user.Username} has no warnings."));
             }
         }
 
-        // 13. Список забаненных пользователей
-        [SlashCommand("bannedusers", "Показать список забаненных пользователей")]
+        // 13. List banned users
+        [SlashCommand("bannedusers", "Display the list of banned users")]
         public async Task BannedUsers(InteractionContext ctx)
         {
             if (!IsUserAdmin(ctx))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("У тебя нет прав для использования этой команды.")
+                    new DiscordInteractionResponseBuilder().WithContent("You don't have permission to use this command.")
                         .AsEphemeral(true));
                 return;
             }
 
             var bannedUsers = await ctx.Guild.GetBansAsync();
-            var bannedList = string.Join("\n", bannedUsers.Select(b => $"Username - {b.User.Username}  User iD - {b.User.Id}"));
+            var bannedList = string.Join("\n", bannedUsers.Select(b => $"Username - {b.User.Username}  User ID - {b.User.Id}"));
 
             if (string.IsNullOrEmpty(bannedList))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent("На сервере нет забаненных пользователей."));
+                    new DiscordInteractionResponseBuilder().WithContent("There are no banned users on this server."));
             }
             else
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"Забаненные пользователи:\n{bannedList}"));
+                    new DiscordInteractionResponseBuilder().WithContent($"Banned users:\n{bannedList}"));
             }
         }
     }
