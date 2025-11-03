@@ -12,25 +12,25 @@ namespace MyDiscordBot.commands
         [Command("help")]
         public async Task Help(CommandContext ctx)
         {
-            await ctx.Channel.SendMessageAsync(content: "просто напиши / и ты увидишь все комманды с описанием =)");
+            await ctx.Channel.SendMessageAsync(content: "Write "/" to see all commands =)");
         }
         
         
         [Command(name: "hello")]
         public async Task Hello(CommandContext ctx)
         {
-            await ctx.Channel.SendMessageAsync("привет");
+            await ctx.Channel.SendMessageAsync("Hi!");
         }
 
         
-        [Command(name: "random")] // комманда рандмных числел. пример: !random 1 100
+        [Command(name: "random")] // random number generator, for example: !random 1 100
         public async Task Random(CommandContext ctx, int min, int max)
         {
             var randomValue = new System.Random().Next(min, max);
-            await ctx.Channel.SendMessageAsync( content:ctx.User.Mention + " - ваше число " + randomValue);
+            await ctx.Channel.SendMessageAsync( content:ctx.User.Mention + " - your number is " + randomValue);
         }
         
-        private const ulong TargetUserId = 1234567890123456789; // всавьте сюда любое айди кого хотите чтобы отпраляло в тайм-аут на 1 минуту.
+        private const ulong TargetUserId = 1234567890123456789; // Insert here any ID of anyone you want to be sent to timeout for 1 minute..
 
         [Command("!")]
         public async Task TimeoutUser(CommandContext ctx)
@@ -44,16 +44,16 @@ namespace MyDiscordBot.commands
                 {
                     var duration = TimeSpan.FromMinutes(1);
                     await member.TimeoutAsync(DateTime.UtcNow + duration);
-                    await ctx.RespondAsync($"{member.Username} был отправлен в тайм-аут на 1 минуту.");
+                    await ctx.RespondAsync($"{member.Username} has been timeouted for 1 minute.");
                 }
                 else
                 {
-                    await ctx.RespondAsync("Пользователь не найден.");
+                    await ctx.RespondAsync("User not found.");
                 }
             }
             else
             {
-                await ctx.RespondAsync("У вас нет прав.");
+                await ctx.RespondAsync("You don't have permission to use this command.");
             }
         }
         
